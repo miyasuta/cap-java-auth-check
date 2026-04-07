@@ -1,0 +1,68 @@
+### ============================================================
+### Topic 6: @requires を action/function に直接置いたパターン（対比用）
+###
+### エンティティレベルで @restrict を書くのではなく、
+### action/function に直接 @requires を置いた場合の動作を確認する。
+###
+### 【結果】CAP Java 4.8.0 では action/function 直接の @requires は機能しない
+###   Admin6 ロールを持つ alice でも 403 になる。
+###   → CAP Java では action/function の権限制御は
+###     エンティティ側の @restrict で grant に action 名を指定する方法のみサポート。
+###
+### 【参考】CDS ドキュメントの表の脚注は Node.js の話として記載されており、
+###   Java における action/function 直接アノテーションの動作は明記されていない。
+### ============================================================
+
+### セットアップ: JP の Order 登録
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic6
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{
+  "ID": "60000000-0000-0000-0000-000000000001",
+  "title": "JP Order",
+  "amount": 100.00,
+  "region": "JP"
+}
+
+###
+### セットアップ: US の Order 登録
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic6
+Authorization: Basic bob bob
+Content-Type: application/json
+
+{
+  "ID": "60000000-0000-0000-0000-000000000002",
+  "title": "US Order",
+  "amount": 200.00,
+  "region": "US"
+}
+
+###
+### Topic 6-A: alice(Admin6ロール) が directAction を呼び出す
+### @requires: 'Admin6' を action に直接付与 → 403 期待外れ(!)
+### CAP Java では action 直接の @requires が機能しない
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic6(60000000-0000-0000-0000-000000000001)/OrderService.directAction
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{}
+
+###
+### Topic 6-B: viewer が directAction を呼び出す → 403 期待
+### (alice も viewer も同じ 403 になる = @requires が効いていない)
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic6(60000000-0000-0000-0000-000000000001)/OrderService.directAction
+Authorization: Basic viewer viewer
+Content-Type: application/json
+
+{}
+
+###
+### Topic 6-C: alice が directFunction を呼び出す → 403（alice も弾かれる）
+GET http://localhost:8080/odata/v4/OrderService/OrdersTopic6(60000000-0000-0000-0000-000000000001)/OrderService.directFunction()
+Authorization: Basic alice alice
+
+###
+### Topic 6-D: viewer が directFunction を呼び出す → 403
+GET http://localhost:8080/odata/v4/OrderService/OrdersTopic6(60000000-0000-0000-0000-000000000001)/OrderService.directFunction()
+Authorization: Basic viewer viewer

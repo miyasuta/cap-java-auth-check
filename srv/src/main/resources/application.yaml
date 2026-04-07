@@ -17,6 +17,7 @@ cds:
             - Admin3
             - Admin4
             - Admin5
+            - Admin6
           attributes:
             region:
               - JP
@@ -28,6 +29,7 @@ cds:
             - Admin3
             - Admin4
             - Admin5
+            - Admin6
           attributes:
             region:
               - US

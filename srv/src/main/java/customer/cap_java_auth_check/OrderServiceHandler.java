@@ -20,6 +20,9 @@ import cds.gen.orderservice.OrdersTopic3_;
 import cds.gen.orderservice.OrdersTopic3ApproveContext;
 import cds.gen.orderservice.OrdersTopic5_;
 import cds.gen.orderservice.OrdersTopic5GetSummaryContext;
+import cds.gen.orderservice.OrdersTopic6_;
+import cds.gen.orderservice.OrdersTopic6DirectActionContext;
+import cds.gen.orderservice.OrdersTopic6DirectFunctionContext;
 
 @Component
 @ServiceName(OrderService_.CDS_NAME)
@@ -64,6 +67,22 @@ public class OrderServiceHandler implements EventHandler {
     public void onGetSummary(OrdersTopic5GetSummaryContext ctx) {
         logger.info("getSummary called");
         ctx.setResult("summary result");
+        ctx.setCompleted();
+    }
+
+    // --- Topic 6: @restrictをaction/functionに直接置いたパターン ---
+    // toによるロール制限は有効。whereはモデル参照不可（コンパイルエラー）、静的式は無視される。
+
+    @On(event = "directAction", entity = OrdersTopic6_.CDS_NAME)
+    public void onDirectAction(OrdersTopic6DirectActionContext ctx) {
+        logger.info("directAction called");
+        ctx.setCompleted();
+    }
+
+    @On(event = "directFunction", entity = OrdersTopic6_.CDS_NAME)
+    public void onDirectFunction(OrdersTopic6DirectFunctionContext ctx) {
+        logger.info("directFunction called");
+        ctx.setResult("direct function result");
         ctx.setCompleted();
     }
 

@@ -48,6 +48,25 @@ service OrderService @(requires: 'authenticated-user') {
   ])
   entity OrdersTopic4 as projection on db.Orders;
 
+  // --- Topic 6: @requiresをaction/functionに直接置いたパターン（対比用） ---
+  // エンティティレベルではなくaction/functionに直接@requiresを置いた場合の動作を確認する
+  // @requires はロール制限のみ（where は使えない）
+  // エンティティ自体にはREAD/CREATE/DELETEを許可しておき、action/functionの制御に集中する
+  @(restrict: [
+    { grant: 'READ' },
+    { grant: ['CREATE', 'DELETE'], to: 'Admin6' }
+  ])
+  entity OrdersTopic6 as projection on db.Orders
+  actions {
+    // action に直接 @requires → ロール制限のみ有効
+    @(requires: 'Admin6')
+    action directAction();
+    // where に相当する条件は書けない（@requires は to のみ）
+    // 参考: entity フィールド参照の where は CDS コンパイルエラーになる
+    @(requires: 'Admin6')
+    function directFunction() returns String;
+  }
+
   // --- Topic 5: Bound Function の権限制御 ---
   // 検証1: viewerはfunctionを呼べない（ロール制限）
   // 検証2: READのwhere条件はfunctionに引き継がれるか
