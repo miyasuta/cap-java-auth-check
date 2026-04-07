@@ -1,0 +1,35 @@
+### ============================================================
+### Topic 1: Bound Action のデフォルト権限
+### WRITE ロールは action をカバーしない
+### addNote は grant に明示しないと呼べない
+### ============================================================
+
+### セットアップ: テストデータ登録（aliceで）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic1
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{
+  "ID": "10000000-0000-0000-0000-000000000001",
+  "title": "Order 1",
+  "amount": 100.00,
+  "region": "JP"
+}
+
+###
+### Topic 1-A: Admin1(alice)はaddNoteを呼べる → 200 期待
+### （@restrict に grant: 'addNote', to: 'Admin1' を明示しているため）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic1(10000000-0000-0000-0000-000000000001)/OrderService.addNote
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{ "note": "test note" }
+
+###
+### Topic 1-B: viewer は addNote を呼べない → 403 期待
+### （viewer は Admin1 ロールを持たず、addNote の grant に含まれていないため）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic1(10000000-0000-0000-0000-000000000001)/OrderService.addNote
+Authorization: Basic viewer viewer
+Content-Type: application/json
+
+{ "note": "test note" }

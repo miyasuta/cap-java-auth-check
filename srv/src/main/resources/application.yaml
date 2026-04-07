@@ -1,0 +1,35 @@
+
+---
+spring:
+  config.activate.on-profile: default
+  sql.init.platform: h2
+cds:
+  data-source.auto-config.enabled: false
+  security:
+    mock:
+      enabled: true
+      users:
+        - name: alice
+          password: alice
+          roles:
+            - Admin1
+            - Admin2
+            - Admin3
+            - Admin4
+            - Admin5
+          attributes:
+            region:
+              - JP
+        - name: bob
+          password: bob
+          roles:
+            - Admin1
+            - Admin2
+            - Admin3
+            - Admin4
+            - Admin5
+          attributes:
+            region:
+              - US
+        - name: viewer
+          password: viewer

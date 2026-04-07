@@ -1,0 +1,56 @@
+### ============================================================
+### Topic 2: Bound Action への where 条件の非適用
+### UPDATE の where: (region = $user.region) は action に引き継がれない
+### alice(region=JP) は US の Order でも process を呼べる
+### ============================================================
+
+### セットアップ: JP の Order 登録（aliceで）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic2
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{
+  "ID": "20000000-0000-0000-0000-000000000001",
+  "title": "JP Order",
+  "amount": 100.00,
+  "region": "JP"
+}
+
+###
+### セットアップ: US の Order 登録（bobで）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic2
+Authorization: Basic bob bob
+Content-Type: application/json
+
+{
+  "ID": "20000000-0000-0000-0000-000000000002",
+  "title": "US Order",
+  "amount": 200.00,
+  "region": "US"
+}
+
+###
+### Topic 2-A: alice(region=JP)はJPのOrderをUPDATEできる → 200 期待
+PATCH http://localhost:8080/odata/v4/OrderService/OrdersTopic2(20000000-0000-0000-0000-000000000001)
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{ "amount": 150.00 }
+
+###
+### Topic 2-B: alice(region=JP)はUSのOrderをUPDATEできない → 403/404 期待
+### （UPDATE の where: (region = $user.region) により JPユーザーはUSのOrderを更新不可）
+PATCH http://localhost:8080/odata/v4/OrderService/OrdersTopic2(20000000-0000-0000-0000-000000000002)
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{ "amount": 250.00 }
+
+###
+### Topic 2-C: alice(region=JP)はUSのOrderのprocessを呼べる → 200 期待
+### （process の grant に where がないため、UPDATE の where 制限は引き継がれない）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic2(20000000-0000-0000-0000-000000000002)/OrderService.process
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{}

@@ -1,0 +1,50 @@
+### ============================================================
+### Topic 3: CAP Java での Bound Action where 非サポート
+### action の grant に where を指定してもランタイムで無視される
+### alice(region=JP) は US の Order でも approve を呼べてしまう
+### → region制限が必要な場合はカスタムハンドラで実装が必要
+### ============================================================
+
+### セットアップ: JP の Order 登録（aliceで）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic3
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{
+  "ID": "30000000-0000-0000-0000-000000000001",
+  "title": "JP Order",
+  "amount": 100.00,
+  "region": "JP"
+}
+
+###
+### セットアップ: US の Order 登録（bobで）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic3
+Authorization: Basic bob bob
+Content-Type: application/json
+
+{
+  "ID": "30000000-0000-0000-0000-000000000002",
+  "title": "US Order",
+  "amount": 200.00,
+  "region": "US"
+}
+
+###
+### Topic 3-A: alice(region=JP)はJPのOrderのapproveを呼べる → 200 期待
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic3(30000000-0000-0000-0000-000000000001)/OrderService.approve
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{}
+
+###
+### Topic 3-B: alice(region=JP)はUSのOrderのapproveを呼べる → 200(!) 期待
+### 本来は where: (region = $user.region) で拒否されるべきだが、
+### CAP Java ランタイムは action の where 条件を適用しないため通ってしまう
+### → OrderServiceHandler.java のコメントアウトされたカスタムハンドラを有効にすると 403 になる
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic3(30000000-0000-0000-0000-000000000002)/OrderService.approve
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{}

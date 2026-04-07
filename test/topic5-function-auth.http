@@ -1,0 +1,57 @@
+### ============================================================
+### Topic 5: Bound Function の権限制御
+### 検証1: viewerはfunctionを呼べない（ロール制限）
+### 検証2: READのwhere条件はfunctionに引き継がれるか
+### 検証3: functionのgrantにwhereを指定した場合、適用されるか
+### ============================================================
+### 注意: Function は GET リクエスト（Action は POST）
+### ============================================================
+
+### セットアップ: JP の Order 登録（aliceで）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic5
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{
+  "ID": "50000000-0000-0000-0000-000000000001",
+  "title": "JP Order",
+  "amount": 100.00,
+  "region": "JP"
+}
+
+###
+### セットアップ: US の Order 登録（bobで）
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic5
+Authorization: Basic bob bob
+Content-Type: application/json
+
+{
+  "ID": "50000000-0000-0000-0000-000000000002",
+  "title": "US Order",
+  "amount": 200.00,
+  "region": "US"
+}
+
+###
+### Topic 5-A: alice(Admin5ロール)はfunctionを呼べる → 200 期待
+GET http://localhost:8080/odata/v4/OrderService/OrdersTopic5(50000000-0000-0000-0000-000000000001)/OrderService.getSummary()
+Authorization: Basic alice alice
+
+###
+### Topic 5-B: viewerはfunctionを呼べない → 403 期待
+### （Admin5ロールがないため）
+GET http://localhost:8080/odata/v4/OrderService/OrdersTopic5(50000000-0000-0000-0000-000000000001)/OrderService.getSummary()
+Authorization: Basic viewer viewer
+
+###
+### Topic 5-C: alice(region=JP)はUSのOrderのfunctionを呼べるか？
+### READのwhere条件が引き継がれる → 403 期待
+### READのwhere条件が引き継がれない → 200 期待
+GET http://localhost:8080/odata/v4/OrderService/OrdersTopic5(50000000-0000-0000-0000-000000000002)/OrderService.getSummary()
+Authorization: Basic alice alice
+
+###
+### Topic 5-D: alice(region=JP)のREAD（一覧取得）はJPのみ返るか？
+### where: (region = $user.region) が適用される → JPのOrderのみ 期待
+GET http://localhost:8080/odata/v4/OrderService/OrdersTopic5
+Authorization: Basic alice alice

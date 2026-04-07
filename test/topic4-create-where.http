@@ -1,0 +1,44 @@
+### ============================================================
+### Topic 4: CREATE に対する where 条件（Java 4.0+ のみ）
+### CAP Java 4.0+ では CREATE 時に入力データの属性チェックが動作する
+### alice(region=JP) は region=JP でのみ CREATE できる
+### ============================================================
+
+### Topic 4-A: alice(region=JP)はregion=JPでCREATEできる → 201 期待
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic4
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{
+  "ID": "40000000-0000-0000-0000-000000000001",
+  "title": "JP Order",
+  "amount": 100.00,
+  "region": "JP"
+}
+
+###
+### Topic 4-B: alice(region=JP)はregion=USでCREATEできない → 400/403 期待
+### CAP Java 4.0+ の入力データ検証により、$user.region(JP)と不一致のため拒否される
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic4
+Authorization: Basic alice alice
+Content-Type: application/json
+
+{
+  "ID": "40000000-0000-0000-0000-000000000002",
+  "title": "US Order",
+  "amount": 200.00,
+  "region": "US"
+}
+
+###
+### 参考: bob(region=US)はregion=USでCREATEできる → 201 期待
+POST http://localhost:8080/odata/v4/OrderService/OrdersTopic4
+Authorization: Basic bob bob
+Content-Type: application/json
+
+{
+  "ID": "40000000-0000-0000-0000-000000000003",
+  "title": "US Order by Bob",
+  "amount": 300.00,
+  "region": "US"
+}
